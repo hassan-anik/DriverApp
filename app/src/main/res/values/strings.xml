@@ -1,0 +1,30 @@
+<resources>
+    <string name="app_name">Busfinder Driver</string>
+    <string name="verify_email">Verify Email</string>
+    <string name="title_activity_driver_location">Map</string>
+    <string name="google_direction_api">AIzaSyDwKaNdwM_kFyayyaN4j-PwWe_dY8llPMQ</string>
+    <string name="verify_now">VERIFY NOW</string>
+    <string name="new_user_sign_up">New User? sign up</string>
+    <string name="login">login</string>
+    <string name="forgot_password">Forgot password</string>
+    <string name="sign_in_to_continue">sign_in_to_continue</string>
+    <string name="busfinder_driver">busfinder driver</string>
+    <string name="todo">TODO</string>
+    <string name="already_have_an_account">Already have an account</string>
+    <string name="signup">SignUp</string>
+    <string name="phone_no">Phone No</string>
+    <string name="fullname">Fullname</string>
+    <string name="signup_to_start_your_journey">SignUp to start your journey</string>
+    <string name="welcome">Welcome</string>
+    <string name="username">Username</string>
+    <string name="full_name">Full name</string>
+    <string name="email">Email</string>
+    <string name="phone">Phone</string>
+    <string name="password">Password</string>
+    <string name="go_to_login_page">Go to Login page</string>
+    <string name="sign_up">Sign up</string>
+    <string name="get_direction">Get Direction</string>
+    <string name="enter_pick_up_location">Enter Pick Up Location</string>
+    <string name="find_user">FIND USER</string>
+    <string name="go">GO</string>
+</resources>
