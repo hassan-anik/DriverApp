@@ -1,5 +1,7 @@
 package com.example.busfinderdriver;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.ActivityOptions;
@@ -14,19 +16,32 @@ import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-public class SplashScreen extends AppCompatActivity {
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
+
+import java.nio.channels.GatheringByteChannel;
+
+public class SplashScreen extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener{
 
     private static int splash_screen=4000;
     //Variables
     Animation topAnim,bottomAnim;
     ImageView image;
     TextView slogan_text,logo_text;
+    GoogleApiClient googleApiClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_splash);
+        googleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
 
         //animation
         topAnim= AnimationUtils.loadAnimation(this,R.anim.top_animation);
@@ -61,6 +76,21 @@ public class SplashScreen extends AppCompatActivity {
             }
         },splash_screen);
 
+
+    }
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
     }
 }

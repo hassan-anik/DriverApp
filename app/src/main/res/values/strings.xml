@@ -27,4 +27,9 @@
     <string name="enter_pick_up_location">Enter Pick Up Location</string>
     <string name="find_user">FIND USER</string>
     <string name="go">GO</string>
+    <string name="mirpur_to_uttara">Mirpur To Uttara</string>
+    <string name="mirpur_to_bosundhara">Mirpur To Bosundhara</string>
+    <string name="mirpur_to_rampura">Mirpur To Rampura</string>
+    <string name="title_activity_mirpur2uttara">Map</string>
+    <string name="title_activity_mirpur2_rampura">Map</string>
 </resources>

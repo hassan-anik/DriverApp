@@ -56,9 +56,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:background="#00000000"
-                    android:text="Share location"
                     android:onClick="showlocation"
-                    >
+                    android:text="Share location">
 
                 </Button>
 
@@ -76,8 +75,8 @@
                     android:layout_height="match_parent"
                     android:id="@+id/goToGoogleMap"
                     android:background="#00000000"
-                    android:onClick="GoToGoogleMap"
-                    android:text="Go to google map"/>
+                    android:onClick="selectRoute"
+                    android:text="Select route"/>
 
             </com.google.android.material.card.MaterialCardView>
 

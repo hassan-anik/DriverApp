@@ -5,38 +5,40 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+import com.directions.route.AbstractRouting;
+import com.directions.route.Route;
+import com.directions.route.RouteException;
+import com.directions.route.Routing;
+import com.directions.route.RoutingListener;
 
 import android.Manifest;
 import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
-import android.os.PersistableBundle;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
-import android.view.WindowManager;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
-import android.widget.AdapterView;
-import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CompoundButton;
-import android.widget.EditText;
-import android.widget.RadioGroup;
-import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.example.busfinderdriver.Common.Common;
 import com.example.busfinderdriver.Remote.IGoogleAPI;
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
+import com.firebase.geofire.GeoQuery;
+import com.firebase.geofire.GeoQueryEventListener;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -45,7 +47,6 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -57,16 +58,11 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.JointType;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
-import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.SquareCap;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.api.net.PlacesClient;
@@ -74,35 +70,25 @@ import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.karumi.dexter.Dexter;
-import com.karumi.dexter.PermissionToken;
-import com.karumi.dexter.listener.PermissionDeniedResponse;
-import com.karumi.dexter.listener.PermissionGrantedResponse;
-import com.karumi.dexter.listener.PermissionRequest;
-import com.karumi.dexter.listener.single.PermissionListener;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.sql.DatabaseMetaData;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-
-public class DriverLocation extends FragmentActivity implements OnMapReadyCallback,
+public class mirpur2Rampura extends FragmentActivity implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
-        LocationListener {
+        LocationListener , RoutingListener{
 
     private GoogleMap mMap;
 
@@ -122,9 +108,12 @@ public class DriverLocation extends FragmentActivity implements OnMapReadyCallba
     GeoFire geoFire;
     Marker mCurrent;
     SwitchCompat location_switch;
-    public  double latitude;
-    public  double longitude;
 
+    private Boolean driverFound = false;
+    private String driverFoundID;
+    private int radius = 10;
+
+    Button btn_find_user,btn_rotate;
     //location
     Location mLastLocation;
     FusedLocationProviderClient fusedLocationProviderClient;
@@ -139,6 +128,8 @@ public class DriverLocation extends FragmentActivity implements OnMapReadyCallba
     private Handler handler;
     private LatLng startPosition, endPosition, currentPosition;
     private int index, next;
+    private List<Polyline> polylines;
+    private static final int[] COLORS = new int[]{R.color.primary_dark_material_light};
     //private Button btnGo;
     private AutocompleteSupportFragment places;
     PlacesClient placesClient;
@@ -146,6 +137,11 @@ public class DriverLocation extends FragmentActivity implements OnMapReadyCallba
     private PolylineOptions polylineOptions, blackPolylineOption;
     private Polyline blackPolyline, greyPolyline;
     private IGoogleAPI mService;
+    LatLng pickupLocation,rotateLocation;
+    private double latitude;
+    private double longitude;
+    Marker marker;
+    DatabaseHelper databaseHelper;
 
     Runnable drawPathRunnable = new Runnable() {
         @Override
@@ -173,9 +169,9 @@ public class DriverLocation extends FragmentActivity implements OnMapReadyCallba
                     carMarker.setRotation(getBearing(startPosition,newPos));
                     mMap.moveCamera(CameraUpdateFactory.newCameraPosition(
                             new CameraPosition.Builder()
-                            .target(newPos)
-                            .zoom(15.5f)
-                            .build()
+                                    .target(newPos)
+                                    .zoom(15.5f)
+                                    .build()
                     ));
                 }
             });
@@ -202,10 +198,12 @@ public class DriverLocation extends FragmentActivity implements OnMapReadyCallba
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_driver_location);
+        setContentView(R.layout.activity_mirpur2_rampura);
         mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        btn_find_user = findViewById(R.id.btn_find_user);
+
         String apiKey = "AIzaSyDwKaNdwM_kFyayyaN4j-PwWe_dY8llPMQ";
         //Init View
         location_switch = (SwitchCompat) findViewById(R.id.location_switch);
@@ -245,24 +243,149 @@ public class DriverLocation extends FragmentActivity implements OnMapReadyCallba
 
             @Override
             public void onError(@NonNull Status status) {
-                Toast.makeText(DriverLocation.this, ""+status.toString(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(mirpur2Rampura.this, ""+status.toString(), Toast.LENGTH_SHORT).show();
             }
         });
 
         //GeoFire
-        reference = FirebaseDatabase.getInstance().getReference("drivers");
+        reference = FirebaseDatabase.getInstance().getReference("drivers").child("Rampura");
         geoFire = new GeoFire(reference);
         setUpLocation();
         mService= Common.getGoogleAPI();
+        btn_find_user.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pickupLocation = new LatLng(mLastLocation.getLatitude(),mLastLocation.getLongitude());
+                getcloseatDriver();
+            }
+        });
+
     }
 
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        Intent intent = new Intent(DriverLocation.this,DriverProfile.class);
+        Intent intent = new Intent(mirpur2Rampura.this,SelectedRoad.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(intent);
         finish();
+    }
+
+    private void getRotateRoute() {
+        GeoQuery geoQuery = geoFire.queryAtLocation(new GeoLocation(rotateLocation.latitude, rotateLocation.longitude), radius);
+        geoQuery.removeAllListeners();
+        geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
+            @Override
+            public void onKeyEntered(String key, GeoLocation location) {
+                DatabaseReference databaseReference2 = FirebaseDatabase.getInstance().getReference("drivers");
+                DatabaseReference databaseReference = databaseReference2.child("first location");
+                //DatabaseReference databaseReference1 = databaseReference.child("l");
+                ValueEventListener valueEventListener = databaseReference2.addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        Double alat = snapshot.child("0").getValue(Double.class);
+                        Double alng = snapshot.child("1").getValue(Double.class);
+                        LatLng mirpur = new LatLng(23.811721, 90.356754);
+                        mMap.addMarker(new MarkerOptions().position(mirpur).title("Campus"));
+                        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(mirpur, 10);
+                        mMap.animateCamera(cameraUpdate);
+                        //mMap.setMinZoomPreference(10);
+                        getRouteToMarker(mirpur);
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+
+                    }
+                });
+            }
+
+            @Override
+            public void onKeyExited(String key) {
+
+            }
+
+            @Override
+            public void onKeyMoved(String key, GeoLocation location) {
+
+            }
+
+            @Override
+            public void onGeoQueryReady() {
+            }
+
+            @Override
+            public void onGeoQueryError(DatabaseError error) {
+
+            }
+        });
+    }
+
+
+    private void getcloseatDriver() {
+        // DatabaseReference driverLocation = FirebaseDatabase.getInstance().getReference().child("drivers");
+
+        // GeoFire geoFire = new GeoFire(driverLocation);
+
+        GeoQuery geoQuery = geoFire.queryAtLocation(new GeoLocation(pickupLocation.latitude, pickupLocation.longitude), radius);
+
+        geoQuery.removeAllListeners();
+
+        geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
+            @Override
+            public void onKeyEntered(String key, GeoLocation location) {
+
+                if(!driverFound){
+                    if(driverFound = true){
+                        LatLng rampura = new LatLng(23.760049, 90.418720);
+                        marker = mMap.addMarker(new MarkerOptions().position(rampura).title("Rampura"));
+                        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(rampura, 10);
+                        mMap.animateCamera(cameraUpdate);
+                        mMap.setMinZoomPreference(10);
+                        getRouteToMarker(rampura);
+                    };
+                    driverFoundID = key;
+
+                }
+            }
+
+            @Override
+            public void onKeyExited(String key) {
+
+
+            }
+
+            @Override
+            public void onKeyMoved(String key, GeoLocation location) {
+            }
+
+            @Override
+            public void onGeoQueryReady() {
+                if(!driverFound)
+                {
+                    radius++;
+                    getcloseatDriver();
+
+                }
+
+            }
+
+            @Override
+            public void onGeoQueryError(DatabaseError error) {
+
+            }
+        });
+
+    }
+
+    private void getRouteToMarker(LatLng latLng) {
+        Routing routing = new Routing.Builder()
+                .travelMode(AbstractRouting.TravelMode.DRIVING)
+                .withListener(this)
+                .alternativeRoutes(true)
+                .waypoints(new LatLng(mLastLocation.getLatitude(),mLastLocation.getLongitude()), latLng)
+                .build();
+        routing.execute();
     }
 
     private void getDirection() {
@@ -314,9 +437,11 @@ public class DriverLocation extends FragmentActivity implements OnMapReadyCallba
                                 blackPolylineOption.jointType(JointType.ROUND);
                                 blackPolyline = mMap.addPolyline(blackPolylineOption);
 
+
+                                //mMap.moveCamera(CameraUpdateFactory.newLatLng(uttara));
                                 mMap.addMarker(new MarkerOptions()
-                                .position(polyLineList.get(polyLineList.size()-1))
-                                .title("Pickup Location"));
+                                        .position(polyLineList.get(polyLineList.size()-1))
+                                        .title("Pickup Location"));
                                 //Animation
                                 ValueAnimator polyLineAnimator = ValueAnimator.ofInt(0,100);
                                 polyLineAnimator.setDuration(2000);
@@ -335,8 +460,8 @@ public class DriverLocation extends FragmentActivity implements OnMapReadyCallba
                                 polyLineAnimator.start();
 
                                 carMarker = mMap.addMarker(new MarkerOptions().position(currentPosition)
-                                .flat(true)
-                                .icon(BitmapDescriptorFactory.fromResource(R.drawable.car)));
+                                        .flat(true)
+                                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.car)));
 
                                 handler = new Handler();
                                 index = -1;
@@ -350,7 +475,7 @@ public class DriverLocation extends FragmentActivity implements OnMapReadyCallba
 
                         @Override
                         public void onFailure(Call<String> call, Throwable t) {
-                            Toast.makeText(DriverLocation.this, ""+t.getMessage(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(mirpur2Rampura.this, ""+t.getMessage(), Toast.LENGTH_SHORT).show();
                         }
                     });
         }
@@ -461,6 +586,12 @@ public class DriverLocation extends FragmentActivity implements OnMapReadyCallba
             if (location_switch.isChecked()) {
                 latitude = mLastLocation.getLatitude();
                 longitude = mLastLocation.getLongitude();
+
+                /*boolean alreadyExecuted = false;
+                if(alreadyExecuted){
+                    onlyOnce();
+                    alreadyExecuted = true;
+                }*/
                 //update to firebase
                 geoFire.setLocation(FirebaseAuth.getInstance().getCurrentUser().getUid(), new GeoLocation(latitude, longitude), new GeoFire.CompletionListener() {
                     @Override
@@ -469,7 +600,8 @@ public class DriverLocation extends FragmentActivity implements OnMapReadyCallba
                             mCurrent.remove();
                         mCurrent = mMap.addMarker(new MarkerOptions()
                                 .position(new LatLng(latitude, longitude))
-                        .title("your location"));
+                                .title("your location"));
+
                         //Move Camera
                         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), 18.0f));
 
@@ -477,6 +609,10 @@ public class DriverLocation extends FragmentActivity implements OnMapReadyCallba
                 });
             }
         }
+    }
+
+    private void onlyOnce() {
+        geoFire.setLocation("first location", new GeoLocation(latitude,longitude));
     }
 
     private void rotateMarker(final Marker mCurrent, final float i, GoogleMap mMap) {
@@ -511,9 +647,10 @@ public class DriverLocation extends FragmentActivity implements OnMapReadyCallba
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
+
         mMap = googleMap;
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-        mMap.setTrafficEnabled(false);
+        mMap.setTrafficEnabled(true);
         mMap.setIndoorEnabled(false);
         mMap.setBuildingsEnabled(false);
         mMap.getUiSettings().setZoomControlsEnabled(true);
@@ -540,6 +677,55 @@ public class DriverLocation extends FragmentActivity implements OnMapReadyCallba
         mLastLocation = location;
         displayLocation();
     }
+    //Line between two points
+    @Override
+    public void onRoutingFailure(RouteException e) {
+        if(e != null) {
+            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }else {
+            Toast.makeText(this, "Something went wrong, Try again", Toast.LENGTH_SHORT).show();
+        }
+    }
 
+    @Override
+    public void onRoutingStart() {
 
+    }
+
+    @Override
+    public void onRoutingSuccess(ArrayList<Route> route, int shortestRouteIndex) {
+        if(polylines.size()>0) {
+            for (Polyline poly : polylines) {
+                poly.remove();
+            }
+        }
+
+        polylines = new ArrayList<>();
+        //add route(s) to the map.
+        for (int i = 0; i <route.size(); i++) {
+
+            //In case of more than 5 alternative routes
+            int colorIndex = i % COLORS.length;
+
+            PolylineOptions polyOptions = new PolylineOptions();
+            polyOptions.color(getResources().getColor(COLORS[colorIndex]));
+            polyOptions.width(10 + i * 3);
+            polyOptions.addAll(route.get(i).getPoints());
+            Polyline polyline = mMap.addPolyline(polyOptions);
+            polylines.add(polyline);
+
+            Toast.makeText(getApplicationContext(),"Route "+ (i+1) +": distance - "+ route.get(i).getDistanceValue()+": duration - "+ route.get(i).getDurationValue(),Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onRoutingCancelled() {
+
+    }
+    private void erasePolyLine(){
+        for(Polyline line : polylines){
+            line.remove();
+        }
+        polylines.clear();
+    }
 }

@@ -45,11 +45,10 @@
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".UserLocation" />
-
+        tools:context=".mirpur2Rampura" />
     <androidx.cardview.widget.CardView
         app:cardElevation="10dp"
-        android:layout_width="match_parent"
+        android:layout_width="100dp"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true">
 
@@ -61,21 +60,22 @@
             android:layout_height="wrap_content">
             <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/location_switch"
-                android:layout_width="0dp"
+                android:layout_width="40dp"
                 android:layout_weight="3"
                 android:layout_height="wrap_content"
                 android:thumb="@drawable/location_off"
                 app:track="@drawable/location_on"/>
 
-            <Button
-                android:id="@+id/btn_find_user"
-                android:text="@string/find_user"
-                android:layout_weight="7"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"/>
-
         </LinearLayout>
 
     </androidx.cardview.widget.CardView>
+    <Button
+        android:id="@+id/btn_find_user"
+        android:text="Rampura"
+        android:layout_weight="7"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="150dp"
+        android:layout_alignParentBottom="true"/>
 
 </RelativeLayout>

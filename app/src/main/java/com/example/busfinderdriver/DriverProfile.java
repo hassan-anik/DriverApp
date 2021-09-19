@@ -75,6 +75,12 @@ public class DriverProfile extends AppCompatActivity{
         });
     }
 
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        DriverProfile.this.finish();
+    }
+
     private void showAllDriverData() {
 
         Intent intent =getIntent();
@@ -134,7 +140,9 @@ public class DriverProfile extends AppCompatActivity{
         finish();
     }
 
-    public void GoToGoogleMap(View view) {
-
+    public void selectRoute(View view) {
+        Intent intent = new Intent(DriverProfile.this,SelectedRoad.class);
+        startActivity(intent);
+        finish();
     }
 }
