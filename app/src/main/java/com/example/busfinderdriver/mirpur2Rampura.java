@@ -2,6 +2,7 @@ package com.example.busfinderdriver;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
@@ -17,6 +18,7 @@ import com.directions.route.RoutingListener;
 
 import android.Manifest;
 import android.animation.ValueAnimator;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -81,9 +83,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.sql.DatabaseMetaData;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class mirpur2Rampura extends FragmentActivity implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
@@ -219,6 +226,7 @@ public class mirpur2Rampura extends FragmentActivity implements OnMapReadyCallba
                     stopLocationUpdate();
                     mCurrent.remove();
                     mMap.clear();
+                    alertDialog();
                     //handler.removeCallbacks(drawPathRunnable);
                     Snackbar.make(mapFragment.getView(),"You are offline",Snackbar.LENGTH_SHORT).show();
                 }
@@ -271,56 +279,78 @@ public class mirpur2Rampura extends FragmentActivity implements OnMapReadyCallba
         finish();
     }
 
-    private void getRotateRoute() {
-        GeoQuery geoQuery = geoFire.queryAtLocation(new GeoLocation(rotateLocation.latitude, rotateLocation.longitude), radius);
-        geoQuery.removeAllListeners();
-        geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
-            @Override
-            public void onKeyEntered(String key, GeoLocation location) {
-                DatabaseReference databaseReference2 = FirebaseDatabase.getInstance().getReference("drivers");
-                DatabaseReference databaseReference = databaseReference2.child("first location");
-                //DatabaseReference databaseReference1 = databaseReference.child("l");
-                ValueEventListener valueEventListener = databaseReference2.addValueEventListener(new ValueEventListener() {
+    private void alertDialog() {
+        new AlertDialog.Builder(mirpur2Rampura.this)
+                .setIcon(R.drawable.ic_baseline_question_answer_24)
+                .setTitle("Survey")
+                .setMessage("Was the application satisfactory?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        Double alat = snapshot.child("0").getValue(Double.class);
-                        Double alng = snapshot.child("1").getValue(Double.class);
-                        LatLng mirpur = new LatLng(23.811721, 90.356754);
-                        mMap.addMarker(new MarkerOptions().position(mirpur).title("Campus"));
-                        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(mirpur, 10);
-                        mMap.animateCamera(cameraUpdate);
-                        //mMap.setMinZoomPreference(10);
-                        getRouteToMarker(mirpur);
+                    public void onClick(DialogInterface dialog, int which) {
+                        FirebaseDatabase db = FirebaseDatabase.getInstance();
+                        DatabaseReference root = db.getReference("Daily Info(Driver)");
+                        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+                        Date date = new Date();
+                        String strDate = dateFormat.format(date).toString();
+                        Map map = new HashMap();
+                        map.put("YES",strDate);
+                        root.child("satisfactory").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).updateChildren(map);
+                        dialog.dismiss();
+                        alertDialog1();
                     }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-
-                    }
-                });
-            }
-
+                }).setNegativeButton("No", new DialogInterface.OnClickListener() {
             @Override
-            public void onKeyExited(String key) {
-
+            public void onClick(DialogInterface dialog, int which) {
+                FirebaseDatabase db = FirebaseDatabase.getInstance();
+                DatabaseReference root = db.getReference("Daily Info(Driver)");
+                DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+                Date date = new Date();
+                String strDate = dateFormat.format(date).toString();
+                Map map = new HashMap();
+                map.put("YES",strDate);
+                root.child("non satisfactory").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).updateChildren(map);
+                dialog.dismiss();
+                alertDialog1();
             }
-
-            @Override
-            public void onKeyMoved(String key, GeoLocation location) {
-
-            }
-
-            @Override
-            public void onGeoQueryReady() {
-            }
-
-            @Override
-            public void onGeoQueryError(DatabaseError error) {
-
-            }
-        });
+        }).show();
     }
 
+    private void alertDialog1() {
+        new AlertDialog.Builder(mirpur2Rampura.this)
+                .setIcon(R.drawable.ic_baseline_question_answer_24)
+                .setTitle("Survey")
+                .setMessage("Do you want to exit?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        FirebaseDatabase db = FirebaseDatabase.getInstance();
+                        DatabaseReference root = db.getReference("Daily Info(Driver)");
+                        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+                        Date date = new Date();
+                        String strDate = dateFormat.format(date).toString();
+                        Map map = new HashMap();
+                        map.put("Satisfy",strDate);
+                        root.child("exit").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).updateChildren(map);
+                        dialog.dismiss();Intent intent = new Intent(mirpur2Rampura.this,DriverProfile.class);
+                        startActivity(intent);
+                        finish();
+                    }
+                }).setNegativeButton("No", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                FirebaseDatabase db = FirebaseDatabase.getInstance();
+                DatabaseReference root = db.getReference("Daily Info(Driver)");
+                DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+                Date date = new Date();
+                String strDate = dateFormat.format(date).toString();
+                Map map = new HashMap();
+                map.put("No",strDate);
+                root.child("No").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).updateChildren(map);
+                dialog.dismiss();
+            }
+        }).show();
+
+    }
 
     private void getcloseatDriver() {
         // DatabaseReference driverLocation = FirebaseDatabase.getInstance().getReference().child("drivers");

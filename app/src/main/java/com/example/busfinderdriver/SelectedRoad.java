@@ -16,7 +16,6 @@ public class SelectedRoad extends AppCompatActivity {
         setContentView(R.layout.activity_selected_road);
         mirpurToUttara = findViewById(R.id.mirpurToUttara);
         mirpurToRampura= findViewById(R.id.mirpurToRampura);
-        mirpurToBosundhara = findViewById(R.id.mirpurToBosundhara);
     }
 
     @Override

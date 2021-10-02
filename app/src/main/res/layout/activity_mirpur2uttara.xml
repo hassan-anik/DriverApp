@@ -68,7 +68,7 @@
 
             <Button
                 android:id="@+id/btn_find_user"
-                android:text="Uttara"
+                android:text="Start"
                 android:layout_weight="7"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"/>

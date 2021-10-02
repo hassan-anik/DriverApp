@@ -32,4 +32,7 @@
     <string name="mirpur_to_rampura">Mirpur To Rampura</string>
     <string name="title_activity_mirpur2uttara">Map</string>
     <string name="title_activity_mirpur2_rampura">Map</string>
+    <string name="text_view">text View</string>
+    <string name="hyperlink"><a href="https://docs.google.com/forms/d/e/1FAIpQLSdqy-kB4IcFir2HvcuooI453L9UuyqkHZn-Td2-2L0Mhsr8xw/viewform">Feedback</a></string>
+
 </resources>

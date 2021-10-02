@@ -2,6 +2,7 @@ package com.example.busfinderdriver;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
@@ -17,6 +18,7 @@ import com.directions.route.RoutingListener;
 
 import android.Manifest;
 import android.animation.ValueAnimator;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -31,6 +33,7 @@ import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.busfinderdriver.Common.Common;
@@ -81,9 +84,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.sql.DatabaseMetaData;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class mirpur2uttara extends FragmentActivity implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
@@ -113,7 +121,7 @@ public class mirpur2uttara extends FragmentActivity implements OnMapReadyCallbac
     private String driverFoundID;
     private int radius = 10;
     Marker marker;
-
+    TextView distanceToUttara;
     Button btn_find_user;
     //location
     Location mLastLocation;
@@ -141,6 +149,8 @@ public class mirpur2uttara extends FragmentActivity implements OnMapReadyCallbac
     LatLng pickupLocation,rotateLocation;
     private double latitude;
     private double longitude;
+    private double latitude1,longitude1,latitude2,longitude2;
+    private char unit;
 
     Runnable drawPathRunnable = new Runnable() {
         @Override
@@ -202,7 +212,6 @@ public class mirpur2uttara extends FragmentActivity implements OnMapReadyCallbac
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         btn_find_user = findViewById(R.id.btn_find_user);
-
         String apiKey = "AIzaSyDwKaNdwM_kFyayyaN4j-PwWe_dY8llPMQ";
         //Init View
         location_switch = (SwitchCompat) findViewById(R.id.location_switch);
@@ -218,6 +227,7 @@ public class mirpur2uttara extends FragmentActivity implements OnMapReadyCallbac
                     stopLocationUpdate();
                     mCurrent.remove();
                     mMap.clear();
+                    alertDialog();
                     //handler.removeCallbacks(drawPathRunnable);
                     Snackbar.make(mapFragment.getView(),"You are offline",Snackbar.LENGTH_SHORT).show();
                 }
@@ -269,6 +279,80 @@ public class mirpur2uttara extends FragmentActivity implements OnMapReadyCallbac
         startActivity(intent);
         finish();
     }
+
+    private void alertDialog() {
+        new AlertDialog.Builder(mirpur2uttara.this)
+                .setIcon(R.drawable.ic_baseline_question_answer_24)
+                .setTitle("Survey")
+                .setMessage("Was the application satisfactory?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        FirebaseDatabase db = FirebaseDatabase.getInstance();
+                        DatabaseReference root = db.getReference("Daily Info(Driver)");
+                        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+                        Date date = new Date();
+                        String strDate = dateFormat.format(date).toString();
+                        Map map = new HashMap();
+                        map.put("YES",strDate);
+                        root.child("satisfactory").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).updateChildren(map);
+                        dialog.dismiss();
+                        alertDialog1();
+                    }
+                }).setNegativeButton("No", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                FirebaseDatabase db = FirebaseDatabase.getInstance();
+                DatabaseReference root = db.getReference("Daily Info(Driver)");
+                DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+                Date date = new Date();
+                String strDate = dateFormat.format(date).toString();
+                Map map = new HashMap();
+                map.put("YES",strDate);
+                root.child("non satisfactory").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).updateChildren(map);
+                dialog.dismiss();
+                alertDialog1();
+            }
+        }).show();
+    }
+
+    private void alertDialog1() {
+        new AlertDialog.Builder(mirpur2uttara.this)
+                .setIcon(R.drawable.ic_baseline_question_answer_24)
+                .setTitle("Survey")
+                .setMessage("Do you want to exit?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        FirebaseDatabase db = FirebaseDatabase.getInstance();
+                        DatabaseReference root = db.getReference("Daily Info(Driver)");
+                        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+                        Date date = new Date();
+                        String strDate = dateFormat.format(date).toString();
+                        Map map = new HashMap();
+                        map.put("Satisfy",strDate);
+                        root.child("exit").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).updateChildren(map);
+                        dialog.dismiss();Intent intent = new Intent(mirpur2uttara.this,DriverProfile.class);
+                        startActivity(intent);
+                        finish();
+                    }
+                }).setNegativeButton("No", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                FirebaseDatabase db = FirebaseDatabase.getInstance();
+                DatabaseReference root = db.getReference("Daily Info(Driver)");
+                DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+                Date date = new Date();
+                String strDate = dateFormat.format(date).toString();
+                Map map = new HashMap();
+                map.put("No",strDate);
+                root.child("No").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).updateChildren(map);
+                dialog.dismiss();
+            }
+        }).show();
+
+    }
+
 
     private void getRotateRoute() {
         GeoQuery geoQuery = geoFire.queryAtLocation(new GeoLocation(rotateLocation.latitude, rotateLocation.longitude), radius);
@@ -328,7 +412,7 @@ public class mirpur2uttara extends FragmentActivity implements OnMapReadyCallbac
 
         GeoQuery geoQuery = geoFire.queryAtLocation(new GeoLocation(pickupLocation.latitude, pickupLocation.longitude), radius);
 
-        geoQuery.removeAllListeners();
+        //geoQuery.removeAllListeners();
 
         geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
             @Override

@@ -2,6 +2,7 @@ package com.example.busfinderdriver;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.method.LinkMovementMethod;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -29,6 +30,7 @@ public class DriverProfile extends AppCompatActivity{
     FirebaseAuth auth;
     String _PASSWORD,_NAME,_PHONE,_EMAIL, userID;
     FirebaseUser user;
+    TextView feedbackLink;
 
 
     @Override
@@ -144,5 +146,10 @@ public class DriverProfile extends AppCompatActivity{
         Intent intent = new Intent(DriverProfile.this,SelectedRoad.class);
         startActivity(intent);
         finish();
+    }
+
+    public void feedback(View view) {
+        feedbackLink=findViewById(R.id.driverFeedback);
+        feedbackLink.setMovementMethod(LinkMovementMethod.getInstance());
     }
 }

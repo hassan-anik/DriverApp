@@ -7,30 +7,33 @@
     tools:context=".SelectedRoad"
     android:background="#099F91"
     android:orientation="vertical">
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Select your destination"
+        android:gravity="center"
+        android:textSize="40sp"
+        android:paddingTop="60dp"
+        android:fontFamily="@font/antic"
+        android:textColor="#7842D8"
+        />
 
     <Button
         android:id="@+id/mirpurToUttara"
         android:layout_width="200dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="150dp"
+        android:layout_marginTop="100dp"
         android:layout_gravity="center"
-        android:text="Mirpur To Uttara"
+        android:text="Uttara"
         android:onClick="mirpurToUttara"/>
-    <Button
-        android:id="@+id/mirpurToBosundhara"
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="150dp"
-        android:layout_gravity="center"
-        android:text="Mirpur To Bosundhara"
-        android:onClick="mirpurToBosundhara"/>
+
     <Button
         android:id="@+id/mirpurToRampura"
         android:layout_width="200dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="150dp"
+        android:layout_marginTop="100dp"
         android:layout_gravity="center"
-        android:text="Mirpur To Rampura"
+        android:text="Rampura"
         android:onClick="mirpurToRampura"/>
 
 
